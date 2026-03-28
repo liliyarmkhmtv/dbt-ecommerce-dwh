@@ -1,0 +1,12 @@
+sources:
+    - name: ecommerce
+      database: dbt-ecommerce-dwh-491416
+      schema: ecommerce
+      tables:
+        - name: customers
+        - name: order_items
+        - name: order_reviews
+        - name: orders
+        - name: products
+        - name: sellers
+        - name: product_category_name_translation

@@ -1,0 +1,6 @@
+sources:
+    - name: payments
+      database: dbt-ecommerce-dwh-491416
+      schema: payments
+      tables:
+        - name: order_payments

@@ -1,0 +1,6 @@
+sources:
+    - name: geo
+      database: dbt-ecommerce-dwh-491416
+      schema: geo
+      tables:
+        - name: geolocation
