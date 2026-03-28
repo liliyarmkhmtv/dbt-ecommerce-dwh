@@ -3,3 +3,5 @@ target/
 dbt_packages/
 data/
 *.csv
+venv/
+.vscode/
