@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: stg_geo__geolocation
+    description: "Staging model for geolocation data from the e-commerce source."
+    columns:
+      - name: zip_code_prefix
+        description: "Zip code prefix for the geolocation."
+        data_tests:
+          - not_null:
+              config:
+                severity: error

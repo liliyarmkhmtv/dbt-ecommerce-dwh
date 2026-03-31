@@ -1,0 +1,176 @@
+version: 2
+
+models:
+  - name: stg_ecommerce__orders
+    description: "Staging model for orders data from the e-commerce source."
+    columns:
+      - name: order_id
+        description: "Unique identifier for each order."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+          - unique:
+              config:
+                severity: error
+      - name: customer_id
+        description: "Identifier for the customer who placed the order."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+          - relationships:
+              to: ref('stg_ecommerce__customers')
+              field: customer_id
+              config:
+                severity: warn
+      - name: order_status
+        description: "Current status of the order."
+        data_tests:
+          - accepted_values:
+              values: ['unavailable', 'shipped', 'processing', 'invoiced', 'delivered', 'created', 'canceled', 'approved']
+              config:
+                severity: warn
+
+  - name: stg_ecommerce__customers
+    description: "Staging model for customers data from the e-commerce source."
+    columns:
+      - name: customer_unique_id
+        description: "Unique identifier for each customer."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+      - name: customer_id
+        description: "Identifier for orders table."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+          - relationships:
+              to: ref('stg_ecommerce__orders')
+              field: customer_id
+              config:
+                severity: warn
+      - name: customer_zip_code_prefix
+        description: "Zip code prefix for the customer's address."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              to: ref('stg_geo__geolocation')
+              field: zip_code_prefix
+              config:
+                severity: warn
+
+  - name: stg_ecommerce__order_reviews
+    description: "Staging model for order reviews data from the e-commerce source."
+    columns:
+      - name: review_id
+        description: "Unique identifier for each review."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+      - name: order_id
+        description: "Identifier for the order to which the review belongs."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+          - relationships:
+              to: ref('stg_ecommerce__orders')
+              field: order_id
+              config:
+                severity: warn
+
+  - name: stg_ecommerce__order_items
+    description: "Staging model for order items data from the e-commerce source."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - order_item_id
+    columns:
+        - name: order_id
+          description: "Identifier for the order to which the item belongs."
+          data_tests:
+            - not_null:
+                config:
+                  severity: error
+            - relationships:
+                to: ref('stg_ecommerce__orders')
+                field: order_id
+                config:
+                  severity: warn
+        - name: product_id
+          description: "Identifier for the product in the order item."
+          data_tests:
+            - not_null:
+                config:
+                  severity: error
+            - relationships:
+                to: ref('stg_ecommerce__products')
+                field: product_id
+                config:
+                  severity: warn
+        - name: seller_id
+          description: "Identifier for the seller of the product in the order item."
+          data_tests:
+            - not_null:
+                config:
+                  severity: error
+            - relationships:
+                to: ref('stg_ecommerce__sellers')
+                field: seller_id
+                config:
+                  severity: warn
+
+  - name: stg_ecommerce__products
+    description: "Staging model for products data from the e-commerce source."
+    columns:
+        - name: product_id
+          description: "Unique identifier for each product."
+          data_tests:
+            - not_null:
+                config:
+                  severity: error
+            - unique:
+                config:
+                  severity: error
+        - name: product_category_name
+          description: "Category name for the product."
+          data_tests:
+            - not_null:
+                config:
+                  severity: warn
+            - relationships:
+                to: ref('stg_ecommerce__product_category_name_translation')
+                field: product_category_name
+                config:
+                  severity: warn
+
+  - name: stg_ecommerce__sellers 
+    description: "Staging model for sellers data from the e-commerce source."
+    columns:
+        - name: seller_id
+          description: "Unique identifier for each seller."
+          data_tests:
+            - not_null:
+                config:
+                  severity: error
+            - unique:
+                config:
+                  severity: error
+        - name: seller_zip_code_prefix
+          description: "Zip code prefix for the seller's address."
+          data_tests:
+            - not_null:
+                config:
+                  severity: warn
+            - relationships:
+                to: ref('stg_geo__geolocation')
+                field: zip_code_prefix
+                config:
+                  severity: warn

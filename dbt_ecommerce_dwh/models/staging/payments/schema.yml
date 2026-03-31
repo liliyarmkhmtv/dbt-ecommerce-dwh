@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg_payments__payments
+    description: "Staging model for payments data from the e-commerce source."
+    columns:
+      - name: order_id
+        description: "Identifier for the order associated with the payment."
+        data_tests:
+          - not_null:
+              config:
+                severity: error
+          - relationships:
+              to: ref('stg_ecommerce__orders')
+              field: order_id
+              config:
+                severity: error
