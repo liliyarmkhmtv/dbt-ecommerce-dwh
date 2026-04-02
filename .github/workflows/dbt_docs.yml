@@ -1,0 +1,63 @@
+name: Generate dbt Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  dbt-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-bigquery
+
+      - name: Set up GCP credentials
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp_credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_credentials.json" >> $GITHUB_ENV
+
+      - name: Set up profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          dbt_ecommerce_dwh:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: dbt-ecommerce-dwh-491416
+                dataset: dbt-ecommerce
+                location: EU
+                threads: 4
+                keyfile: /tmp/gcp_credentials.json
+          EOF
+
+      - name: Generate dbt docs
+        working-directory: dbt_ecommerce_dwh
+        run: |
+          dbt deps
+          dbt docs generate
+
+      - name: Copy docs to gh-pages
+        run: |
+          mkdir -p docs
+          cp dbt_ecommerce_dwh/target/manifest.json docs/
+          cp dbt_ecommerce_dwh/target/catalog.json docs/
+          cp dbt_ecommerce_dwh/target/index.html docs/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
