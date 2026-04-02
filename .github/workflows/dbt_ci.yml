@@ -1,0 +1,58 @@
+name: dbt CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  dbt-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-bigquery
+
+      - name: Set up GCP credentials
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp_credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_credentials.json" >> $GITHUB_ENV
+
+      - name: Set up profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          dbt_ecommerce_dwh:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: dbt-ecommerce-dwh-491416
+                dataset: dbt-ecommerce
+                location: EU
+                threads: 4
+                keyfile: /tmp/gcp_credentials.json
+          EOF
+
+      - name: Run dbt deps
+        working-directory: dbt_ecommerce_dwh
+        run: dbt deps
+
+      - name: Run dbt build
+        working-directory: dbt_ecommerce_dwh
+        run: dbt build
