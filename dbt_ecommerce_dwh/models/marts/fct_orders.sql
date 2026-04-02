@@ -1,3 +1,10 @@
+{{
+    config(
+        materialized='incremental',
+        unique_key='order_id'
+    )
+}}
+
 select
     order_id,
     order_status,
@@ -23,3 +30,9 @@ select
     is_late
 from {{ ref('int_orders__enriched') }}
 left join {{ ref('int_orders__payments') }} using (order_id)
+
+{% if is_incremental() %}
+
+where order_purchased_at >= (select coalesce(max(order_purchased_at),'1900-01-01') from {{ this }} )
+
+{% endif %}
